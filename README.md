@@ -7,7 +7,7 @@ Kuro-cli is the fastest way to get started with [Kuro](https://github.com/kanade
 This utility ensures that Kuro keeps always running on the background by using pm2, no matter what OS you are running. This means all you need to do is run this command once and forget about it.
 
 ### Installing:
-1. Ensure you have node installed
+1. Ensure you have [node](https://nodejs.org/en/download/package-manager/) installed
 2. Run `npm i -g kuro-cli`
 3. Run `kuro-cli`
 4. Follow the instructions on screen
