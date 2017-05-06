@@ -6,15 +6,18 @@ const prompts = require('./prompts.js')
 const colors = require('colors/safe')
 const fs = require('fs')
 const path = require('path')
+const homeDir = require('os').homedir()
+const kuroDir = path.join(homeDir, 'kuro')
 
 shell.cd(path.resolve(process.cwd()))
 checkForKuroInstall()
 
 function checkForKuroInstall() {
-	if (!fs.existsSync(path.join(__dirname, 'kuro', 'kuro.js'))) {
+	if (!fs.existsSync(kuroDir)) {
 		console.log(' ')
 		console.log(colors.green(':: Installing Kuro ::'))
 		console.log(' ')
+		shell.cd(homeDir)
 		shell.exec('git clone git://github.com/kanadeko/kuro.git')
 		return setupKuroForTheFirstTime()
 	}
@@ -25,12 +28,12 @@ function checkForKuroInstall() {
 function checkForUpdates(comingFromInstall) {
 	console.log(colors.green(':: Checking for updates ::'))
 
-	// Enter Kuro directory if not coming from install
 	if (comingFromInstall) {
 		console.log(' ')
-		console.log(colors.green(':: Kuro has been installed to ' + path.resolve(process.cwd()) + ' ::'))
-		shell.cd('kuro')
+		console.log(colors.green(`:: Kuro has been installed to ${kuroDir} ::`))
 	}
+
+	shell.cd(kuroDir)
 
 	// Check for updates on Kuro
 	shell.exec('git pull')
@@ -39,7 +42,7 @@ function checkForUpdates(comingFromInstall) {
 	console.log(colors.green(':: Checking for dependency updates ::'))
 	shell.exec('npm update')
 
-	if (fs.existsSync(path.join(__dirname, 'pm2'))) {
+	if (fs.existsSync(path.join(kuroDir, 'pm2.e'))) {
 		shell.exec('pm2 restart kuro')
 		console.log(' ')
 		console.log(colors.green(':: Kuro started via PM2, you can now close this window! ::'))
@@ -52,6 +55,7 @@ function checkForUpdates(comingFromInstall) {
 function setupKuroForTheFirstTime() {
 	console.log(colors.green(':: Installing dependencies ::'))
 
+	shell.cd(kuroDir)
 	shell.exec('npm install')
 	prompt.start()
 	prompt.message = ''
@@ -83,24 +87,14 @@ function buildConfigFile(result) {
 			module: 's',
 			function: 'run'
 		},
-		telegramNotifications: {
-			active: false,
-			botToken: 'YOUR-TELEGRAM-BOT-TOKEN',
-			userId: 'The user id your Telegram token should send a mesage to'
-		},
-		embedColor: 15473237,
-		database: {
-			client: 'sqlite3',
-			connection: { filename: './db' },
-			useNullAsDefault: true
-		}
+		embedColor: 15473237
 	}
 
-	fs.writeFile(path.join(__dirname, 'kuro', 'config.json'), JSON.stringify(config, null, '\t'), 'utf-8', (err) => {
+	fs.writeFile(path.join(kuroDir, 'config.json'), JSON.stringify(config, null, '\t'), 'utf-8', (err) => {
 	// fs.writeFile(`config.js`, config, 'utf8', (err) => {
 		if (err) throw err;
 		console.log(' ')
-		console.log(colors.green(':: Basic Kuro setup is done ::'))
+		console.log(colors.green(':: Kuro setup is done ::'))
 		if (result.pm2 === 'yes' || result.pm2 === 'y') {
 			return installPM2()
 		}
@@ -116,9 +110,10 @@ function installPM2() {
 		if (error) return checkForUpdates(true)
 
 		// Create empty pm2 file so the cli knows we have it installed
-		fs.closeSync(fs.openSync(path.join(__dirname, 'pm2'), 'w'))
-		shell.cd('kuro')
+		fs.closeSync(fs.openSync(path.join(kuroDir, 'pm2.e'), 'w'))
+		shell.cd(kuroDir)
 		shell.exec('pm2 start kuro.js')
+		shell.exec('pm2 save')
 		return checkForUpdates(true)
 	});
 }
